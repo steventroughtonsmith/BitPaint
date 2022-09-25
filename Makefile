@@ -6,7 +6,6 @@
 
 # Location of your mpw binary
 MPW=~/bin/mpw
-HFSDM=/Applications/HFS\ Disk\ Maker.app/Contents/MacOS/hfs_disk_maker_cli
 
 RINCLUDES=/Applications/MPW-GM/Interfaces\&Libraries/Interfaces/RIncludes
 
@@ -52,9 +51,17 @@ all: prepass bin/$(EXECUTABLE).i386 bin/$(EXECUTABLE).ppc bin/$(EXECUTABLE).68k 
 prepass:
 	mkdir -p obj bin disk
 
+# Requires hfsutils (packaged in Homebrew)
 package:
+	rm -f bin/$(EXECUTABLE).68k.bin
+	rm -f disk/$(EXECUTABLE).img
 	rm -f disk/$(EXECUTABLE).img.hqx
-	$(HFSDM) bin disk/$(EXECUTABLE).img &> /dev/null
+	macbinary encode ./bin/$(EXECUTABLE).68k
+	dd if=/dev/zero bs=1m count=1 of=disk/$(EXECUTABLE).img
+	hformat -l $(EXECUTABLE) disk/$(EXECUTABLE).img
+	hmount disk/$(EXECUTABLE).img
+	hcopy -m ./bin/$(EXECUTABLE).68k.bin :
+	humount disk/$(EXECUTABLE).img
 	SetFile -t dimg -c ddsk disk/$(EXECUTABLE).img
 	binhex encode disk/$(EXECUTABLE).img
 
